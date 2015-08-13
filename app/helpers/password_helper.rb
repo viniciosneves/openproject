@@ -27,47 +27,30 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-require 'rexml/document'
+module PasswordHelper
+  def render_password_complexity_tooltip
+    rules = password_rules_description
 
-module OpenProject
-  module VERSION #:nodoc:
-    MAJOR = 4
-    MINOR = 2
-    PATCH = 6
-    TINY  = PATCH # Redmine compat
+    s = OpenProject::Passwords::Evaluator.min_length_description
+    s += "<br> #{rules}" if rules.present?
 
-    # Used by semver to define the special version (if any).
-    # A special version "satify but have a lower precedence than the associated
-    # normal version". So 2.0.0RC1 would be part of the 2.0.0 series but
-    # be considered to be an older version.
-    #
-    #   1.4.0 < 2.0.0RC1 < 2.0.0RC2 < 2.0.0 < 2.1.0
-    #
-    # This method may be overridden by third party code to provide vendor or
-    # distribution specific versions. They may or may not follow semver.org:
-    #
-    #   2.0.0debian-2
-    def self.special
-      ''
+    s.html_safe
+  end
+
+  private
+
+  # Return a HTML list with active password complexity rules
+  def password_active_rules
+    rules = OpenProject::Passwords::Evaluator.active_rules_list
+    content_tag :ul do
+      rules.map { |item| concat(content_tag(:li, item)) }
     end
+  end
 
-    def self.revision
-      revision = `git rev-parse HEAD`
-      if revision.present?
-        revision.strip[0..8]
-      else
-        nil
-      end
-    end
-
-    REVISION = self.revision
-    ARRAY = [MAJOR, MINOR, PATCH, REVISION].compact
-    STRING = ARRAY.join('.')
-
-    def self.to_a; ARRAY end
-    def self.to_s; STRING end
-    def self.to_semver
-      [MAJOR, MINOR, PATCH].join('.') + special
-    end
+  # Returns a text describing the active password complexity rules,
+  # the minimum number of rules to adhere to and the total number of rules.
+  def password_rules_description
+    return '' if OpenProject::Passwords::Evaluator.min_adhered_rules == 0
+    OpenProject::Passwords::Evaluator.rules_description_locale(password_active_rules)
   end
 end
