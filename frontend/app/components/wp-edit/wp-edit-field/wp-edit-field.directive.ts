@@ -85,7 +85,12 @@ export class WorkPackageEditFieldController {
     }
 
     this.formCtrl.updateWorkPackage()
-      .finally(() => this.deactivate());
+      .finally(() => {
+        this.deactivate();
+        this._forceFocus = true;
+        this.focusField();
+      });
+
   }
 
   public deactivate() {
